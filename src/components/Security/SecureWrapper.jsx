@@ -7,12 +7,14 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
   const [isLocked, setIsLocked] = useState(false);
   const [isTestStarted, setIsTestStarted] = useState(false);
   const [warning, setWarning] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
   const { logEvent } = useLogger(attemptId);
-  
+
   const mediaRecorderRef = useRef(null);
   const recordedChunks = useRef([]);
-  
-  // Use Refs to ensure onstop gets the latest data without stale closures
+
+  // keep latest values
   const nameRef = useRef(studentName);
   const answersRef = useRef(studentAnswers);
 
@@ -30,18 +32,25 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
     const formData = new FormData();
     formData.append('video', blob, `video_${attemptId}.webm`);
     formData.append('attemptId', attemptId);
-    formData.append('studentName', nameRef.current); 
+    formData.append('studentName', nameRef.current);
     formData.append('answers', JSON.stringify(answersRef.current));
 
     try {
-      showIntimation("📤 Uploading to mentor...");
-      const response = await fetch('https://techquestionbackend.onrender.com/api/submit-assessment', {
-        method: 'POST',
-        body: formData,
-      });
+      showIntimation("📤 Uploading assessment...");
+      const response = await fetch(
+        'https://techquestionbackend.onrender.com/api/submit-assessment',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       if (response.ok) {
-        alert("✅ Submitted Successfully!");
+        logEvent("ASSESSMENT_SUBMITTED");
+        setSubmitted(true);
+        showIntimation("✅ Assessment submitted successfully");
+      } else {
+        alert("❌ Submission failed");
       }
     } catch (err) {
       alert("❌ Upload failed. Check server.");
@@ -57,7 +66,7 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
 
       if (stream.getVideoTracks()[0].getSettings().displaySurface !== 'monitor') {
         stream.getTracks().forEach(t => t.stop());
-        alert("❌ Select ENTIRE SCREEN.");
+        alert("❌ Please select ENTIRE SCREEN.");
         return;
       }
 
@@ -78,7 +87,7 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
       setIsTestStarted(true);
       logEvent("RECORDING_STARTED");
     } catch (err) {
-      alert("Permission required.");
+      alert("Screen permission required.");
     }
   };
 
@@ -87,59 +96,68 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
     if (!browser.isChrome) setIsLocked(true);
   }, []);
 
+  // BLOCK NON-CHROME
   if (isLocked) return <BlockingScreen />;
 
-   if (!isTestStarted) {
+  // SUCCESS SCREEN AFTER SUBMIT
+  if (submitted) {
     return (
-      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
-        
-        {/* 1. Company Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #eee', paddingBottom: '20px' }}>
-          <h1 style={{ color: '#007bff', margin: '0 0 10px 0' }}>Software Company</h1>
-          <p style={{ fontSize: '18px', color: '#666' }}>Frontend Developer Role - Technical Assessment</p>
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontFamily: 'Arial',
+        background: '#f0fff4',
+        color: '#065f46'
+      }}>
+        <h2>✅ Assessment Submitted</h2>
+        <p>Your answers and screen recording were sent successfully.</p>
+        <p>You may now safely close this tab.</p>
+      </div>
+    );
+  }
+
+  // START SCREEN
+  if (!isTestStarted) {
+    return (
+      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', fontFamily: 'Arial' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <h1 style={{ color: '#007bff' }}>Software Company</h1>
+          <p>Frontend Developer – Technical Assessment</p>
         </div>
 
-        {/* 2. Company Description */}
-        <div style={{ marginBottom: '30px', lineHeight: '1.6', fontSize: '15px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <h3>About the Company</h3>
           <p>
-            We are a high-growth technology firm specializing in AI-driven web applications. 
-            This assessment helps us understand your problem-solving approach and coding standards. 
-            We value clean code and logical thinking over speed.
+            We are a high-growth technology firm. This assessment evaluates
+            problem-solving, logic, and clean coding practices.
           </p>
         </div>
 
-        {/* 3. Dos and Don'ts Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-          
-          {/* Dos Card */}
-          <div style={{ padding: '20px', borderRadius: '8px', backgroundColor: '#f4fff4', border: '1px solid #c3e6cb' }}>
-            <h4 style={{ color: '#1e7e34', marginTop: '0' }}>✅ Dos</h4>
-            <ul style={{ paddingLeft: '20px', fontSize: '14px' }}>
-              <li>Ensure your webcam and screen sharing is active.</li>
-              <li>Work in a quiet, well-lit environment.</li>
-              <li>Read each question carefully before answering.</li>
-              <li>Click "Final Submit" once you finish the test.</li>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ background: '#f4fff4', padding: '15px', borderRadius: '8px' }}>
+            <h4>✅ Dos</h4>
+            <ul>
+              <li>Share entire screen</li>
+              <li>Quiet environment</li>
+              <li>Read questions carefully</li>
             </ul>
           </div>
 
-          {/* Don'ts Card */}
-          <div style={{ padding: '20px', borderRadius: '8px', backgroundColor: '#fff5f5', border: '1px solid #f5c6cb' }}>
-            <h4 style={{ color: '#bd2130', marginTop: '0' }}>❌ Don'ts</h4>
-            <ul style={{ paddingLeft: '20px', fontSize: '14px' }}>
-              <li><strong>Do not</strong> switch or minimize browser tabs.</li>
-              <li><strong>Do not</strong> use any AI tools or external help.</li>
-              <li><strong>Do not</strong> have other people in the room.</li>
-              <li><strong>Do not</strong> stop the recording until finished.</li>
+          <div style={{ background: '#fff5f5', padding: '15px', borderRadius: '8px' }}>
+            <h4>❌ Don’ts</h4>
+            <ul>
+              <li>Do not switch tabs</li>
+              <li>No AI tools</li>
+              <li>No external help</li>
             </ul>
           </div>
         </div>
 
-        {/* 4. Start Button Area */}
-        <div style={{ textAlign: 'center', backgroundColor: '#f8f9fa', padding: '30px', borderRadius: '12px' }}>
-          <p style={{ marginBottom: '20px', fontSize: '14px', color: '#777' }}>
-            <b>Note:</b> You must select <b>"Entire Screen"</b> in the browser prompt to begin.
-          </p>
+        <div style={{ textAlign: 'center', marginTop: '30px' }}>
           <button onClick={startRecording} style={btnStyle}>
             Start Assessment
           </button>
@@ -148,23 +166,61 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
     );
   }
 
-
+  // TEST RUNNING SCREEN
   return (
     <>
       {warning && <div style={toastStyle}>{warning}</div>}
+
       {children}
-      <button 
-        onClick={() => mediaRecorderRef.current?.stop()} 
-        style={submitBtnStyle}
-      >
-        Final Submit Assessment
-      </button>
+
+      {!submitted && (
+        <button
+          onClick={() => {
+            if (mediaRecorderRef.current?.state === "recording") {
+              mediaRecorderRef.current.stop();
+            }
+          }}
+          style={submitBtnStyle}
+        >
+          Final Submit Assessment
+        </button>
+      )}
     </>
   );
 };
 
-const toastStyle = { position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#ff4d4f', color: 'white', padding: '12px 24px', borderRadius: '8px', zIndex: 10000 };
-const btnStyle = { padding: '15px 30px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' };
-const submitBtnStyle = { position: 'fixed', bottom: '20px', right: '20px', padding: '15px 30px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' };
+const toastStyle = {
+  position: 'fixed',
+  top: '20px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: '#ff4d4f',
+  color: 'white',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  zIndex: 10000
+};
+
+const btnStyle = {
+  padding: '15px 30px',
+  background: '#28a745',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer'
+};
+
+const submitBtnStyle = {
+  position: 'fixed',
+  bottom: '20px',
+  right: '20px',
+  padding: '15px 30px',
+  background: '#007bff',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  fontWeight: 'bold'
+};
 
 export default SecureWrapper;
