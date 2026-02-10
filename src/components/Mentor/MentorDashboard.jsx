@@ -7,7 +7,7 @@ export default function MentorDashboard() {
 
   // Step 1: Fetch data from your backend URL
   useEffect(() => {
-    fetch('http://localhost:5000/api/mentor/submissions')
+    fetch('https://techquestionbackend.onrender.com/api/mentor/submissions')
       .then((res) => res.json())
       .then((data) => {
         setSubmissions(data); // Step 2: Save the JSON data into state
