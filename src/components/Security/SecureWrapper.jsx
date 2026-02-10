@@ -35,11 +35,7 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
 
     try {
       showIntimation("📤 Uploading to mentor...");
-<<<<<<< HEAD
       const response = await fetch('https://techquestionbackend.onrender.com/api/submit-assessment', {
-=======
-      const response = await fetch('https://techquestionbackend.onrender.com/api/mentor/submissions', {
->>>>>>> 29f12239aaeb10a32d31efc6be8a2a77eb9729db
         method: 'POST',
         body: formData,
       });
