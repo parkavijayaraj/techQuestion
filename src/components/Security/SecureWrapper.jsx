@@ -35,7 +35,7 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
 
     try {
       showIntimation("📤 Uploading to mentor...");
-      const response = await fetch('http://localhost:5000/api/submit-assessment', {
+      const response = await fetch('https://techquestionbackend.onrender.com/api/submit-assessment', {
         method: 'POST',
         body: formData,
       });
