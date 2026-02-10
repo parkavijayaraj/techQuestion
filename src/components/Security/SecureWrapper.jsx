@@ -42,7 +42,6 @@ const SecureWrapper = ({ children, attemptId, studentName, studentAnswers }) => 
 
       if (response.ok) {
         alert("✅ Submitted Successfully!");
-        window.location.reload();
       }
     } catch (err) {
       alert("❌ Upload failed. Check server.");
