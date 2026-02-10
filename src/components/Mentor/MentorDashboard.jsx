@@ -18,7 +18,7 @@ export default function MentorDashboard() {
   return (
     <div style={{ padding: '30px', fontFamily: 'Arial' }}>
       <h2 style={{ borderBottom: '2px solid #333', paddingBottom: '10px' }}>
-        Mentor Review Dashboard
+        Review Dashboard
       </h2>
       
       {submissions.length === 0 ? (
