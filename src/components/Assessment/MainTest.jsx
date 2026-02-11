@@ -103,7 +103,10 @@ export default function MainTest({ attemptId, studentName, setStudentName, setSt
   const currentQuestion = QUESTIONS[currentIndex];
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} onCopy={(e) => {
+    e.preventDefault();
+    alert("Copying is disabled during the test!");
+  }}>
       <header style={headerStyle}>
         <div>
           <h2 style={{margin: 0}}>Technical Assessment</h2>
